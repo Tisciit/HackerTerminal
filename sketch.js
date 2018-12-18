@@ -1,49 +1,21 @@
-let info = {
-    frame: 0,
-};
-
-let allowedchars = "!§$%&/()=?²³{[]}\"üäöÜÄÖ+#-*'_~.:,;<>|abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123465789";
-// let allowedchars = "♥";
-let chars = [];
-let cols = 0;
-
-const size = 16;
-const spawnProb = .01;
+let frame = 0;
 
 function setup() {
     createCanvas(windowWidth - 4, windowHeight - 4);
     background(50);
     initialization.getValues();
-    cols = windowWidth / size;
+    matrixRain.getValues();
+    matrixRain.setPhrase("Hello there");
 }
 
 function draw() {
 
     if (!initialization.done) {
-        let newFrame = initialization.order[initialization.current](info.frame);
-        info.frame = newFrame;
-    } else {
-        background(color(55, 55, 55, 50));
-        textSize(size);
-
-        for (let i = chars.length - 1; i >= 0; i--) {
-            fill(color(0, 143, 17));
-            let c = chars[i];
-            c.draw();
-            c.moveDown();
-
-            if (c.offScreen()) {
-                chars.splice(i, 1);
-            }
-        }
-
-
-        for (let i = 0; i < cols; i++) {
-            if (Math.random() < spawnProb) {
-                let r = floor(random(allowedchars.length - 1));
-                chars.push(new MatrixText(allowedchars[r], size, i * size, 0, random()));
-            }
-        }
+        let newFrame = initialization.order[initialization.current](frame);
+        frame = newFrame;
+    } else if (!matrixRain.done) {
+        matrixRain.animation(frame);
+        frame++;
     }
 }
 
@@ -85,9 +57,11 @@ let initialization = {
 
             return num - this.entryFrame;
         },
+
+        //draw Outter Terminal
         0: function (i) {
             i = this.setEntryFrame(i);
-            let speed = 4;
+            let speed = 2;
 
             //Settings for the Points to be drawn
             stroke(255);
@@ -114,6 +88,8 @@ let initialization = {
 
             return i + this.entryFrame;
         },
+
+        //UserName
         1: function (i) {
             fill(initialization.fontSettings.fontColor);
             textFont(initialization.fontSettings.font);
@@ -124,6 +100,7 @@ let initialization = {
             return i;
         },
 
+        //Password
         2: function (i) {
             text('Password', initialization.offSetX + initialization.padding, initialization.offSetY + 5 * initialization.padding);
 
@@ -132,10 +109,11 @@ let initialization = {
             return i;
         },
 
+        //draw Username box
         3: function (i) {
             i = this.setEntryFrame(i);
 
-            let speed = 30;
+            let speed = 10;
 
             //draw Username box
             for (let n = 0; n < speed; n++) {
@@ -157,10 +135,11 @@ let initialization = {
             return i + this.entryFrame;
         },
 
+        //draw Pwd Box
         4: function (i) {
             i = this.setEntryFrame(i);
 
-            let speed = 30;
+            let speed = 10;
             for (let n = 0; n < speed; n++) {
                 i++;
                 if (i < initialization.terminal_Width - 2 * initialization.padding) {
@@ -182,6 +161,7 @@ let initialization = {
             return i + this.entryFrame;
         },
 
+        //write Info
         5: function (i) {
             noStroke();
             textSize(initialization.fontSettings.sizeM());
@@ -195,6 +175,7 @@ let initialization = {
             return i;
         },
 
+        //write 'root' in Username
         6: function (i) {
             i = this.setEntryFrame(i);
             textSize(initialization.fontSettings.sizeL());
@@ -212,6 +193,7 @@ let initialization = {
             return i + this.entryFrame;
         },
 
+        //wait a moment
         7: function (i) {
             i = this.setEntryFrame(i);
             i++;
@@ -222,6 +204,7 @@ let initialization = {
             return i + this.entryFrame;
         },
 
+        //write a bunch of starts in pwd box
         8: function (i) {
             i = this.setEntryFrame(i);
 
@@ -238,11 +221,12 @@ let initialization = {
             return i + this.entryFrame;
         },
 
+        //fade out by applying a box with some alpha value
         9: function (i) {
             i = this.setEntryFrame(i);
 
             fill(255, 255, 255, 20);
-            rect(initialization.offSetX, initialization.offSetY, initialization.terminal_Width, initialization.terminal_Height);
+            rect(initialization.offSetX, initialization.offSetY, initialization.terminal_Width + 1, initialization.terminal_Height + 1);
 
             if (i == 190) {
                 this.entryFrame = null;
@@ -252,6 +236,7 @@ let initialization = {
             return i + this.entryFrame;
         },
 
+        //Write Access granted
         10: function (i) {
             textSize(60);
             textAlign(CENTER);
@@ -262,9 +247,121 @@ let initialization = {
             return i;
         },
 
+        //wait and finish initialzation
         11: function (i) {
-            this[7](i);
-            initialization.done = true;
+            i = this.setEntryFrame(i);
+            i++;
+            if (i == 300) {
+                this.entryFrame = null;
+                initialization.current++;
+                initialization.done = true;
+            }
+            return i + this.entryFrame;
+
+
+            return i;
         },
+    }
+}
+
+let matrixRain = {
+
+    done: false,
+    getValues: function () {
+        push();
+        textSize(this.size);
+        let max = 0;
+        for (let c of this.allowedChars) {
+            let m = textWidth(c);
+            
+            if(max < m){
+                max = m;
+            }
+        }
+        pop();
+        this.cols = Math.floor(width / max);
+    },
+    setPhrase: function (string) {
+        this.phraseToFind = string;
+        this.currentIndex = 0;
+    },
+    allowedChars: " !\"§$%&/()=?²³\\^°@€[]ß*+~'#_-.:,;µ<>|`´üÜöÖäÄabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",
+    //abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123465789
+    chars: [],
+    cols: 0,
+    size: 30,
+    spawnProb: .15,
+
+    phraseToFind: "",
+    currentIndex: 0,
+
+    drawingOnFrame: 3,
+    animation: function (i) {
+
+        if (i % this.drawingOnFrame == 0) {
+            background(color(55, 55, 55, 100));
+            textSize(this.size);
+
+            for (let i = this.chars.length - 1; i >= 0; i--) {
+                fill(color(0, 143, 17));
+                let c = this.chars[i];
+                c.draw();
+                c.moveDown();
+
+                if (c.offScreen()) {
+                    this.chars.splice(i, 1);
+                }
+            }
+
+            for (let c of this.chars) {
+                if (!c.highlighted && c.char == this.phraseToFind[this.currentIndex]) {
+                    c.highlight();
+                    this.currentIndex++;
+
+                    while (this.phraseToFind[this.currentIndex] == "\n") {
+                        this.currentIndex++;
+                    }
+                    break;
+                }
+            }
+
+
+            for (let i = 0; i <= this.cols; i++) {
+                if (Math.random() < this.spawnProb) {
+                    let r = floor(random(this.allowedChars.length));
+                    this.chars.push(new MatrixText(this.allowedChars[r], this.size, i * Math.floor(width / this.cols), 0, 0));
+                }
+            }
+        }
+
+        push();
+        textSize(this.size);
+        textFont('Consolas')
+
+        fill(52, 52, 52);
+        rectMode(CORNER);
+        stroke(255);
+        strokeWeight(1);
+
+        let rows = this.phraseToFind.substring(0, this.currentIndex).split("\n").length;
+        let tWidth = textWidth(this.phraseToFind.substring(0, this.currentIndex)) + (2 * initialization.padding);
+
+        rect(width / 2 - tWidth / 2,
+            height / 3 - (this.size + initialization.padding),
+            tWidth,
+            initialization.padding + (this.size + 5) * rows + initialization.padding);
+        fill(255, 0, 0);
+        noStroke();
+        textAlign(CENTER);
+        text(this.phraseToFind.substring(0, this.currentIndex), width / 2, height / 3);
+        pop();
+
+        if (this.currentIndex == this.phraseToFind.length) {
+            this.done = true;
+            textAlign(CENTER)
+            fill(255, 0, 0);
+            textSize(this.size * 2);
+            text("Connection closed", width / 2, height / 4);
+        }
     }
 }

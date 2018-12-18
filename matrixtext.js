@@ -6,10 +6,20 @@ class MatrixText {
         this.x = x;
         this.y = y;
         this.speed = floor(speed * 2);
+        this.highlighted = false;
     }
 
     draw() {
-        text(this.char, this.x, this.y, this.x + this.size, this.y + this.size);
+        if (this.highlighted) {
+            push();
+            fill(255, 0, 0);
+            noStroke();
+        }
+        text(this.char, this.x, this.y);
+
+        if (this.highlighted) {
+            pop();
+        }
     }
 
     moveDown() {
@@ -18,5 +28,9 @@ class MatrixText {
 
     offScreen() {
         return this.y > windowHeight;
+    }
+
+    highlight() {
+        this.highlighted = true;
     }
 }
